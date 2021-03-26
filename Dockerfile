@@ -11,6 +11,6 @@ WORKDIR $APP_HOME
 COPY . ./
 
 # Install production dependencies.
-RUN python3 -m pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
 CMD streamlit run dashboard.py --server.port $PORT

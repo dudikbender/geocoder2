@@ -15,7 +15,8 @@ load_dotenv(env_loc)
 
 geoapify_key = os.environ.get('GEOAPIFY_KEY')
 
-def geoapify_geocode(address_text: str = 'Finsbury Park Station', country: str = 'uk'):
+def geoapify_geocode(address_text: str = 'Finsbury Park Station', country: str = 'uk',
+                    api_key: str = geoapify_key):
     url = f'https://api.geoapify.com/v1/geocode/search?text={address_text}&apiKey={geoapify_key}&filter=countrycode:{country}'
     headers = CaseInsensitiveDict()
     headers["Accept"] = "application/json"
@@ -27,33 +28,23 @@ def geojson_to_geodataframe(geojson: dict, crs: int = 4326):
     gdf = gpd.GeoDataFrame.from_features(collection['features']).set_crs(epsg=crs)
     return gdf
 
-def address_to_geodataframe(address_text: str = 'Finsbury Park Station', country: str = 'gb', crs: int = 4326):
-    geojson = geoapify_geocode(address_text=address_text, country=country)
+def address_to_geodataframe(address_text: str = 'Finsbury Park Station', country: str = 'gb', crs: int = 4326,
+                            api_key: str = geoapify_key):
+    geojson = geoapify_geocode(address_text=address_text, country=country, api_key=api_key)
     gdf = geojson_to_geodataframe(geojson, crs=crs)
     return gdf
 
-def get_isoline(lat: float, lon: float, type: str = 'time', mode: str = 'walk', range: int = 1000):
-    url = f'https://api.geoapify.com/v1/isoline?lat={lat}&lon={lon}&type={type}&mode={mode}&range={range}&apiKey={geoapify_key}'
+def get_isoline(lat: float, lon: float, type: str = 'time', mode: str = 'walk', range: int = 1000,
+                api_key: str = geoapify_key):
+    url = f'https://api.geoapify.com/v1/isoline?lat={lat}&lon={lon}&type={type}&mode={mode}&range={range}&apiKey={api_key}'
     headers = CaseInsensitiveDict()
     headers["Accept"] = "application/json"
     response = requests.get(url, headers=headers)
     return response.json()
 
 def get_isoline_from_address(address: str, country: str = 'gb', crs: int = 4326, mode: str = 'drive',
-                            traveltime_seconds: int = 1800):
-    '''
-    Parameters:
-    address (str) - 
-    country (str) - 
-    crs (int) - 
-    mode (str) - 
-    traveltime_seconds (int) - 
-    ___________
-    Returns:
-    point geodataframe:
-    polygon geodataframe:
-    '''
-    gdf = address_to_geodataframe(address_text=address, country=country, crs=crs).iloc[0]
+                            traveltime_seconds: int = 1800, api_key: str = geoapify_key):
+    gdf = address_to_geodataframe(address_text=address, country=country, crs=crs, api_key=api_key).iloc[0]
     lat, lon = gdf['lat'], gdf['lon']
     iso = get_isoline(lat=lat, lon=lon, mode=mode, range=traveltime_seconds)
     isoline_gdf = geojson_to_geodataframe(iso)
@@ -61,8 +52,8 @@ def get_isoline_from_address(address: str, country: str = 'gb', crs: int = 4326,
 
 
 def travel_time_payload(overlay_gdf: object, address: str, mode: str = 'walk', range: int = 1000,
-                       weighted_columns: List = None):
-    point_df, travel_df = get_isoline_from_address(address, mode=mode, traveltime_seconds=range)
+                       weighted_columns: List = None, api_key: str = geoapify_key):
+    point_df, travel_df = get_isoline_from_address(address, mode=mode, traveltime_seconds=range, api_key=api_key)
     overlay_df = gpd.overlay(travel_df, overlay_gdf, how='intersection')
     # Add weighted measure columns
     if weighted_columns:
@@ -89,8 +80,9 @@ def map_travel_boundaries(payload, zoom_level: int = 10, show: bool = False):
         return fig
     
 def address_to_travel_map(overlay_gdf: object, address: str, mode: str = 'drive', range: int = 1000,
-                       weighted_columns: List = None, show_map: bool = True, zoom_level: int = 10):
+                       weighted_columns: List = None, show_map: bool = True, zoom_level: int = 10,
+                       api_key: str = geoapify_key):
     payload = travel_time_payload(overlay_gdf=overlay_gdf, address=address, mode=mode, range=range,
-                                 weighted_columns=weighted_columns)
+                                 weighted_columns=weighted_columns, api_key=api_key)
     fig = map_travel_boundaries(payload=payload, zoom_level=zoom_level, show=show_map)
     return payload, fig
