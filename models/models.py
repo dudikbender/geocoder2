@@ -10,10 +10,6 @@ from pathlib import Path
 from typing import List
 import json
 import plotly.express as px
-env_loc = find_dotenv('.env')
-load_dotenv(env_loc)
-
-geoapify_key = 'abc123'
 
 def geoapify_geocode(api_key: str, address_text: str = 'Finsbury Park Station', country: str = 'uk'):
     url = f'https://api.geoapify.com/v1/geocode/search?text={address_text}&apiKey={api_key}&filter=countrycode:{country}'
@@ -68,7 +64,8 @@ def map_travel_boundaries(payload, zoom_level: int = 10, show: bool = False):
                                locations="Ward Code", featureidkey="properties.Ward Code",
                                center={"lat": lat, "lon":lon},
                                hover_data=['Ward Name'],
-                               mapbox_style="carto-positron", zoom=zoom_level,opacity=0.5)
+                               mapbox_style="carto-positron", zoom=zoom_level,opacity=0.5,
+                               color_continuous_scale='oranges')
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     if show:
         fig.show()
