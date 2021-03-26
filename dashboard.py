@@ -2,18 +2,14 @@ import pandas as pd
 import streamlit as st
 import requests
 import geopandas as gpd
-from models.models import travel_time_payload, map_travel_boundaries, \
-                          address_to_travel_map, geojson_to_geodataframe,\
-                              geoapify_geocode
-from pathlib import Path
-import os
+from models import address_to_travel_map, geojson_to_geodataframe
 
 ## Streamlit App
 # Header Text
 st.sidebar.title("**Geocoder2**")
 
 # Sidebar
-api_key = st.sidebar.text_input('Add Geoapify key here', value='abc123')
+api_key = st.sidebar.text_input('Add Geoapify key here', value='e40677dfa4a34d60bde0d88b5921278a')
 address_input = st.sidebar.text_input('Input address here',value='Buckingham Palace')
 travel_mode = st.sidebar.selectbox('Travel mode',options=['walk','bicycle','transit','drive','truck'])
 travel_time = st.sidebar.slider('Travel time (m)', min_value=1, max_value=60, value=20,step=1)
@@ -29,9 +25,9 @@ if search_button:
     gdf = gdf[(gdf.country == 'England') | (gdf.country == 'Wales')]
     gdf = gdf.rename(columns={'wd20cd':'Ward Code','wd20nm':'Ward Name'})
 
-    payload = address_to_travel_map(overlay_gdf=gdf, address=address_input, mode=travel_mode,range=travel_time_seconds,
-                                weighted_columns=[('mean_age','total_population'),('median_age','total_population')],
-                                show_map=False, zoom_level=10, api_key=api_key)
+    payload = address_to_travel_map(api_key=api_key, overlay_gdf=gdf, address=address_input, mode=travel_mode,
+                                    range=travel_time_seconds, weighted_columns=[('mean_age','total_population'),('median_age','total_population')],
+                                    show_map=False, zoom_level=10)
 
     data_payload = payload[0]
     starting_point = data_payload[0]
