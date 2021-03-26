@@ -13,7 +13,7 @@ import plotly.express as px
 env_loc = find_dotenv('.env')
 load_dotenv(env_loc)
 
-geoapify_key = 'e40677dfa4a34d60bde0d88b5921278a'
+geoapify_key = 'abc123'
 
 def geoapify_geocode(api_key: str, address_text: str = 'Finsbury Park Station', country: str = 'uk'):
     url = f'https://api.geoapify.com/v1/geocode/search?text={address_text}&apiKey={api_key}&filter=countrycode:{country}'

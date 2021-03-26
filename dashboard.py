@@ -3,13 +3,20 @@ import streamlit as st
 import requests
 import geopandas as gpd
 from models import address_to_travel_map, geojson_to_geodataframe
+import os
+from dotenv import find_dotenv, load_dotenv
+
+env_loc = find_dotenv('.env')
+load_dotenv(env_loc)
+
+geoapify_key = 'abc123'
 
 ## Streamlit App
 # Header Text
 st.sidebar.title("**Geocoder2**")
 
 # Sidebar
-api_key = st.sidebar.text_input('Add Geoapify key here', value='e40677dfa4a34d60bde0d88b5921278a')
+api_key = st.sidebar.text_input('Add Geoapify key here', value='abc123') # Swap this out with environment variable, if preferred
 address_input = st.sidebar.text_input('Input address here',value='Buckingham Palace')
 travel_mode = st.sidebar.selectbox('Travel mode',options=['walk','bicycle','transit','drive','truck'])
 travel_time = st.sidebar.slider('Travel time (m)', min_value=1, max_value=60, value=20,step=1)
