@@ -43,7 +43,7 @@ if search_button:
     overlay_gdf = data_payload[2].drop(labels='geometry',axis=1)
     map_fig = payload[1]
 
-    st.write(f'Details about area within {travel_time} mins of {address_input} by {travel_mode}:\n')
+    st.write(f'Details about area within **{travel_time} mins** of **{address_input}** by **{travel_mode}**:\n')
     st.write(f'Approx. Population: **{overlay_gdf.total_population.sum():,.0f}**\
               | Median Age: **{overlay_gdf.weighted_median_age.sum():,.0f}** \
               | Average Age: **{overlay_gdf.weighted_mean_age.sum():,.0f}**')
