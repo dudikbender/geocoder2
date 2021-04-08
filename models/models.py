@@ -54,6 +54,10 @@ def travel_time_payload(api_key: str, overlay_gdf: object, address: str, mode: s
             overlay_df[f'weighted_{col[0]}'] = (overlay_df[col[1]] / overlay_df[col[1]].sum()) * overlay_df[col[0]]
     return point_df, travel_df, overlay_df
 
+def travel_time_payload_json():
+    #data = (payload[0].to_json(), payload[1].to_json(), payload[2].to_json())
+    return {'testing':123}
+
 def map_travel_boundaries(payload, zoom_level: int = 10, show: bool = False):
     df = payload[2].drop(labels='geometry',axis=1)
     geojson = json.loads(payload[2].to_json())
