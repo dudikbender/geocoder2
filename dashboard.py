@@ -61,10 +61,10 @@ if search_button:
 
     st.markdown('#### 2019 Prices Paid')
     st.write(f'Median - Area: **£{median_price:,.0f}**\
-              | Nationally: £{prices_gdf.AMOUNT.median():,.0f}')
+              | Nationally: **£{prices_gdf.AMOUNT.median():,.0f}**')
     st.write(f'Average - Area: **£{mean_price:,.0f}**\
               | Nationally: **£{prices_gdf.AMOUNT.mean():,.0f}**')
     st.write(f'Activity - Area: **{len(prices_paid_table):,.0f}**\
-              | Nationally: {len(prices_gdf):,.0f}')
+              | Nationally: **{len(prices_gdf):,.0f}**')
 
     st.plotly_chart(map_fig)
