@@ -1,9 +1,10 @@
 import pandas as pd
+import numpy as np
 import json
 import streamlit as st
 import requests
 import geopandas as gpd
-from models import address_to_travel_map, geojson_to_geodataframe, travel_time_payload_json
+from models import address_to_travel_map, geojson_to_geodataframe, travel_time_prices_paid_table
 import os
 from dotenv import find_dotenv, load_dotenv
 
@@ -19,7 +20,7 @@ st.title("**Geocoder2**")
 # Sidebar
 api_key = st.sidebar.text_input('Add Geoapify key here', value='abc123') # Swap this out with environment variable, if preferred
 address_input = st.sidebar.text_input('Input address here',value='Buckingham Palace')
-travel_mode = st.sidebar.selectbox('Travel mode',options=['walk','bicycle','transit','drive','truck'])
+travel_mode = st.sidebar.selectbox('Travel mode',options=['drive','walk','bicycle','transit','truck'])
 travel_time = st.sidebar.slider('Travel time (m)', min_value=1, max_value=60, value=20,step=1)
 travel_time_seconds = travel_time * 60
 search_button = st.sidebar.button('Search')
@@ -32,8 +33,12 @@ gdf = wards_shp.merge(ward_pop, on='wd20cd', how='left')
 gdf = gdf[(gdf.country == 'England') | (gdf.country == 'Wales')]
 gdf = gdf.rename(columns={'wd20cd':'Ward Code','wd20nm':'Ward Name'})
 
+# UK Prices paid data
+prices = pd.read_csv('data/prices_paid_2019.csv')
+prices_gdf = gpd.GeoDataFrame(prices, geometry=gpd.points_from_xy(prices.longitude, prices.latitude, crs=4326))
+
 if search_button:
-    payload = address_to_travel_map(api_key=api_key, overlay_gdf=gdf, address=address_input, mode=travel_mode,
+    payload = address_to_travel_map(api_key=api_key, overlay_location=gdf, address=address_input, mode=travel_mode,
                                     range=travel_time_seconds, weighted_columns=[('mean_age','total_population'),('median_age','total_population')],
                                     show_map=False, zoom_level=10)
 
@@ -42,10 +47,24 @@ if search_button:
     isoline_gdf = data_payload[1]
     overlay_gdf = data_payload[2].drop(labels='geometry',axis=1)
     map_fig = payload[1]
+    prices_paid_table = travel_time_prices_paid_table(isoline_gdf, prices_gdf)
+    median_price = prices_paid_table.AMOUNT.median()
+    mean_price = prices_paid_table.AMOUNT.mean()
+    total_paid = prices_paid_table.AMOUNT.sum()
 
+    area_median_age = overlay_gdf.weighted_median_age.sum()
+    diff_area_age_to_uk = (area_median_age / 40.5) - 1
     st.write(f'Details about area within **{travel_time} mins** of **{address_input}** by **{travel_mode}**:\n')
     st.write(f'Approx. Population: **{overlay_gdf.total_population.sum():,.0f}**\
-              | Median Age: **{overlay_gdf.weighted_median_age.sum():,.0f}** \
-              | Average Age: **{overlay_gdf.weighted_mean_age.sum():,.0f}**')
+              | Median Age: **{area_median_age:,.0f}** \
+              | {diff_area_age_to_uk:.2%} compared to UK median age (40.5 years)')
+
+    st.markdown('#### 2019 Prices Paid')
+    st.write(f'Median - Area: **£{median_price:,.0f}**\
+              | Nationally: £{prices_gdf.AMOUNT.median():,.0f}')
+    st.write(f'Average - Area: **£{mean_price:,.0f}**\
+              | Nationally: **£{prices_gdf.AMOUNT.mean():,.0f}**')
+    st.write(f'Activity - Area: **{len(prices_paid_table):,.0f}**\
+              | Nationally: {len(prices_gdf):,.0f}')
 
     st.plotly_chart(map_fig)
