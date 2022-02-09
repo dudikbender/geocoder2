@@ -15,10 +15,12 @@ from dotenv import find_dotenv, load_dotenv
 env_loc = find_dotenv('.env')
 load_dotenv(env_loc)
 
-px.set_mapbox_access_token(os.environ.get('MAPBOX_KEY'))
+mapbox_token = os.environ.get('MAPBOX_KEY')
+px.set_mapbox_access_token(mapbox_token)
 
 def geoapify_geocode(api_key: str, address_text: str = 'Finsbury Park Station', country: str = 'uk'):
-    url = f'https://api.geoapify.com/v1/geocode/search?text={address_text}&apiKey={api_key}&filter=countrycode:{country}'
+    url = f'https://api.mapbox.com/geocoding/v5/mapbox.places/{address_text}.json?access_token={mapbox_token}&country={country}'
+    #url = f'https://api.geoapify.com/v1/geocode/search?text={address_text}&apiKey={api_key}&filter=countrycode:{country}'
     headers = CaseInsensitiveDict()
     headers["Accept"] = "application/json"
     response = requests.get(url, headers=headers)
@@ -45,7 +47,8 @@ def get_isoline(api_key: str, lat: float, lon: float, type: str = 'time', mode: 
 def get_isoline_from_address(api_key: str, address: str, country: str = 'gb', crs: int = 4326, mode: str = 'drive',
                             traveltime_seconds: int = 1800):
     location = address_to_geodataframe(address_text=address, country=country, crs=crs, api_key=api_key).iloc[0]
-    lat, lon = location['lat'], location['lon']
+    loc_coords = location['geometry']
+    lon, lat = loc_coords.x, loc_coords.y
     iso = get_isoline(api_key=api_key, lat=lat, lon=lon, mode=mode, range=traveltime_seconds)
     isoline_location = geojson_to_geodataframe(iso)
     return location, isoline_location
