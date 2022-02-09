@@ -18,7 +18,7 @@ geoapify_key = os.environ.get('GEOAPIFY_KEY')
 st.title("**Geocoder2**")
 
 # Sidebar
-api_key = st.sidebar.text_input('Add Geoapify key here', value='abc123') # Swap this out with environment variable, if preferred
+# api_key = st.sidebar.text_input('Add Geoapify key here', value='abc123') # Swap this out with environment variable, if preferred
 address_input = st.sidebar.text_input('Input address here',value='Buckingham Palace')
 travel_mode = st.sidebar.selectbox('Travel mode',options=['drive','walk','bicycle','transit','truck'])
 travel_time = st.sidebar.slider('Travel time (m)', min_value=1, max_value=60, value=20,step=1)
@@ -28,7 +28,7 @@ search_button = st.sidebar.button('Search')
 # Ward boundaries and attributes
 ward_pop = pd.read_csv('data/wards/ward_population_projections_full_2019.csv').iloc[:,1:].drop(columns=['wd20nm'])
 wards_api = requests.get('https://opendata.arcgis.com/datasets/62bfaabbe3e24a359fc36b34d7fe8ac8_0.geojson')
-wards_shp = geojson_to_geodataframe(wards_api.json()).iloc[:,:4].drop(columns='objectid')
+wards_shp = geojson_to_geodataframe(wards_api.json()).iloc[:,:4]
 gdf = wards_shp.merge(ward_pop, on='wd20cd', how='left')
 gdf = gdf[(gdf.country == 'England') | (gdf.country == 'Wales')]
 gdf = gdf.rename(columns={'wd20cd':'Ward Code','wd20nm':'Ward Name'})
@@ -38,7 +38,7 @@ prices = pd.read_csv('data/prices_paid_2019.csv')
 prices_gdf = gpd.GeoDataFrame(prices, geometry=gpd.points_from_xy(prices.longitude, prices.latitude, crs=4326))
 
 if search_button:
-    payload = address_to_travel_map(api_key=api_key, overlay_location=gdf, address=address_input, mode=travel_mode,
+    payload = address_to_travel_map(api_key=geoapify_key, overlay_location=gdf, address=address_input, mode=travel_mode,
                                     range=travel_time_seconds, weighted_columns=[('mean_age','total_population'),('median_age','total_population')],
                                     show_map=False, zoom_level=10)
 
@@ -53,11 +53,11 @@ if search_button:
     total_paid = prices_paid_table.AMOUNT.sum()
 
     area_median_age = overlay_gdf.weighted_median_age.sum()
-    diff_area_age_to_uk = (area_median_age / 40.5) - 1
-    st.write(f'Details about area within **{travel_time} mins** of **{address_input}** by **{travel_mode}**:\n')
+    diff_area_age_to_uk = (area_median_age / 40.5)
+    st.write(f'Details about area within **{travel_time}** mins **{travel_mode}** of **{address_input}**:')
     st.write(f'Approx. Population: **{overlay_gdf.total_population.sum():,.0f}**\
               | Median Age: **{area_median_age:,.0f}** \
-              | {diff_area_age_to_uk:.2%} compared to UK median age (40.5 years)')
+              | {diff_area_age_to_uk:.2%} of UK median age (40.5 years)')
 
     st.markdown('#### 2019 Prices Paid')
     st.write(f'Median - Area: **£{median_price:,.0f}**\

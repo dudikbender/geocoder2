@@ -74,10 +74,6 @@ def map_travel_boundaries(payload, zoom_level: int = 10, show: bool = False):
                                hover_data=['Ward Name'],
                                mapbox_style="carto-positron", zoom=zoom_level,opacity=0.5,
                                color_continuous_scale='oranges')
-    '''fig2 = px.scatter_mapbox(data_frame=location,
-                     lat=location.geometry.y,
-                     lon=location.geometry.x,
-                     hover_name='name')'''
 
     fig2 = px.scatter_mapbox(data_frame=location,
                         lat=location.geometry.y,
