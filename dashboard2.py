@@ -30,7 +30,7 @@ travel_time_seconds = travel_time * 60
 search_button = st.sidebar.button('Search')
 
 with st.expander('Style Options'):
-    area_specificity = st.slider('Specificty of drive-time area',min_value=0, max_value=500, step=5, value=100)
+    area_specificity = st.slider('Specificity of drive-time area',min_value=0, max_value=500, step=5, value=100)
     map_style_options = ['carto-positron', 'carto-darkmatter', 'open-street-map', 'white-bg', 'stamen-terrain', 
                      'stamen-toner', 'stamen-watercolor','basic', 'streets', 'outdoors', 'light', 'dark', 
                      'satellite', 'satellite-streets']
@@ -42,17 +42,18 @@ with st.expander('Style Options'):
 def build_map():
     mapper = Mapper(address=address_input)
 
-    drivetime_map, area_stats = mapper.build_map(mode=travel_mode,
-                                    minutes=travel_time,
-                                    generalize=area_specificity, 
-                                    zoom_level=10,
-                                    opacity=0.5,
-                                    map_style=map_styling,
-                                    color_scheme='oranges')
-    st.dataframe(area_stats)    
-    """ median_price = area_stats.amount.median()
-    mean_price = area_stats.AMOUNT.mean()
-    total_paid = area_stats.AMOUNT.sum()"""
+    drivetime_map, area_stats, price_data = mapper.build_map(mode=travel_mode,
+                                                             minutes=travel_time,
+                                                             generalize=area_specificity, 
+                                                             zoom_level=10,
+                                                             opacity=0.5,
+                                                             map_style=map_styling,
+                                                             color_scheme='oranges')  
+    median_price = price_data.AMOUNT.median()
+    mean_price = price_data.AMOUNT.mean()
+    total_paid = price_data.AMOUNT.sum()
+    
+    """
 
     area_median_age = area_stats.median_age.sum()
     diff_area_age_to_uk = (area_median_age / 40.5)
@@ -61,16 +62,25 @@ def build_map():
               | Median Age: **{area_median_age:,.0f}** \
               | {diff_area_age_to_uk:.2%} of UK median age (40.5 years)')
 
-    """ st.markdown('#### 2019 Prices Paid')
+    """ 
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Temperature", "70 °F", "1.2 °F")
+    col2.metric("Wind", "9 mph", "-8%")
+    col3.metric("Humidity", "86%", "4%")
+    
+    st.markdown('#### 2019 Prices Paid')
+    st.metric(label="Median Price", value=f'{median_price:,.0f}', delta=f'{mapper.prices_gdf.AMOUNT.mean():,.0f}')
     st.write(f'Median - Area: **£{median_price:,.0f}**\
-              | Nationally: **£{prices_gdf.AMOUNT.median():,.0f}**')
+              | Nationally: **£{mapper.prices_gdf.AMOUNT.mean():,.0f}**')
     st.write(f'Average - Area: **£{mean_price:,.0f}**\
-              | Nationally: **£{prices_gdf.AMOUNT.mean():,.0f}**')
-    st.write(f'Activity - Area: **{len(prices_paid_table):,.0f}**\
-              | Nationally: **{len(prices_gdf):,.0f}**') """
+              | Nationally: **£{mapper.prices_gdf.AMOUNT.mean():,.0f}**')
+    st.write(f'Activity - Area: **{len(price_data):,.0f}**\
+              | Nationally: **{len(mapper.prices_gdf):,.0f}**')
 
     st.plotly_chart(drivetime_map)
 
 if search_button:
     build_map()
-    
+
+if style_update_button:
+    build_map()   

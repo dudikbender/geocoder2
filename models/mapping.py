@@ -67,8 +67,9 @@ class Mapper(Geocoder):
         drivetime_area, address_coords = self.overlay(mode, minutes, denoise, generalize)
         lat, lon = address_coords[1], address_coords[0]
         drivetime_with_prices = gpd.sjoin(drivetime_area, self.prices_gdf)
+        drivetime_with_prices = pd.DataFrame(drivetime_with_prices.drop(columns='geometry', axis=1))
 
-        drivetime_data = pd.DataFrame(drivetime_with_prices.drop(columns='geometry', axis=1))
+        drivetime_data = pd.DataFrame(drivetime_area.drop(columns='geometry', axis=1))
         drivetime_geojson = json.loads(drivetime_area.to_json())
 
         fig = px.choropleth_mapbox(drivetime_data, 
@@ -87,4 +88,4 @@ class Mapper(Geocoder):
                                          lon=[lon])
                 
         fig.add_trace(centre_point.data[0]).update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-        return fig, drivetime_data
+        return fig, drivetime_data, drivetime_with_prices
