@@ -4,7 +4,7 @@ import json
 import streamlit as st
 import requests
 import geopandas as gpd
-from models import address_to_travel_map, geojson_to_geodataframe, travel_time_prices_paid_table
+from models import address_to_travel_map, geojson_to_geodataframe, travel_time_prices_paid_table, get_isoline_from_address
 import os
 from dotenv import find_dotenv, load_dotenv
 
@@ -20,6 +20,8 @@ st.title("**Geocoder2**")
 # Sidebar
 # api_key = st.sidebar.text_input('Add Geoapify key here', value='abc123') # Swap this out with environment variable, if preferred
 address_input = st.sidebar.text_input('Input address here',value='Buckingham Palace')
+#st.write(get_isoline_from_address(geoapify_key,address_input))
+
 travel_mode = st.sidebar.selectbox('Travel mode',options=['drive','walk','bicycle','transit','truck'])
 travel_time = st.sidebar.slider('Travel time (m)', min_value=1, max_value=60, value=20,step=1)
 travel_time_seconds = travel_time * 60
@@ -36,6 +38,8 @@ gdf = gdf.rename(columns={'wd20cd':'Ward Code','wd20nm':'Ward Name'})
 # UK Prices paid data
 prices = pd.read_csv('data/prices_paid_2019.csv')
 prices_gdf = gpd.GeoDataFrame(prices, geometry=gpd.points_from_xy(prices.longitude, prices.latitude, crs=4326))
+
+
 
 if search_button:
     payload = address_to_travel_map(api_key=geoapify_key, overlay_location=gdf, address=address_input, mode=travel_mode,
