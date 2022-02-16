@@ -39,48 +39,56 @@ with st.expander('Style Options'):
     map_zoom = st.selectbox('Map zoom', options=[5,6,7,8,8,9,10,11,12,13,14,15],index=6)
     style_update_button = st.button('Update styles')
 
-def build_map():
+def payload():
     mapper = Mapper(address=address_input)
-
     drivetime_map, area_stats, price_data = mapper.build_map(mode=travel_mode,
                                                              minutes=travel_time,
                                                              generalize=area_specificity, 
-                                                             zoom_level=10,
+                                                             zoom_level=map_zoom,
                                                              opacity=0.5,
                                                              map_style=map_styling,
-                                                             color_scheme='oranges')  
-    median_price = price_data.AMOUNT.median()
-    mean_price = price_data.AMOUNT.mean()
-    total_paid = price_data.AMOUNT.sum()
-    
-    """
+                                                             color_scheme=map_colors)
 
-    area_median_age = area_stats.median_age.sum()
+    return drivetime_map, area_stats, price_data, mapper.prices_gdf
+
+def build_metrics(area_stats, price_data, national_prices):
+    def diff_to_national(area, national):
+        diff = area - national
+        return ( diff / national ) * 100
+
+    median_price = price_data.AMOUNT.median()
+    median_price_to_national = diff_to_national(median_price, national_prices.AMOUNT.median())
+
+    mean_price = price_data.AMOUNT.mean()
+    mean_price_to_national = diff_to_national(mean_price, national_prices.AMOUNT.mean())
+
+    total_paid = price_data.AMOUNT.sum()
+    total_paid_to_national = diff_to_national(total_paid, national_prices.AMOUNT.sum())
+
+    area_median_age = area_stats.median_age.median()
     diff_area_age_to_uk = (area_median_age / 40.5)
-    st.write(f'Details about area within **{travel_time}** mins **{travel_mode}** of **{address_input}**:')
+
+    st.write(f'##### Details about area within **{travel_time}** mins **{travel_mode}** of **{address_input}**:')
+
     st.write(f'Approx. Population: **{area_stats.total_population.sum():,.0f}**\
               | Median Age: **{area_median_age:,.0f}** \
               | {diff_area_age_to_uk:.2%} of UK median age (40.5 years)')
 
-    """ 
+    st.markdown('##### House Price paid (2019) details in drivetime area (compared to national average)')
     col1, col2, col3 = st.columns(3)
-    col1.metric("Temperature", "70 °F", "1.2 °F")
-    col2.metric("Wind", "9 mph", "-8%")
-    col3.metric("Humidity", "86%", "4%")
-    
-    st.markdown('#### 2019 Prices Paid')
-    st.metric(label="Median Price", value=f'{median_price:,.0f}', delta=f'{mapper.prices_gdf.AMOUNT.mean():,.0f}')
-    st.write(f'Median - Area: **£{median_price:,.0f}**\
-              | Nationally: **£{mapper.prices_gdf.AMOUNT.mean():,.0f}**')
-    st.write(f'Average - Area: **£{mean_price:,.0f}**\
-              | Nationally: **£{mapper.prices_gdf.AMOUNT.mean():,.0f}**')
-    st.write(f'Activity - Area: **{len(price_data):,.0f}**\
-              | Nationally: **{len(mapper.prices_gdf):,.0f}**')
+    col1.metric("Median", f'£{median_price:,.0f}', f'{median_price_to_national:+.2f}%')
+    col2.metric("Mean", f'£{mean_price:,.0f}', f'{mean_price_to_national:+.2f}%')
+    col3.metric("Total", f'£{total_paid:,.0f}', None)
 
+def build_map(drivetime_map):
     st.plotly_chart(drivetime_map)
 
 if search_button:
-    build_map()
+    drivetime_map, area_stats, price_data, national_prices = payload()
+    build_metrics(area_stats, price_data, national_prices)
+    build_map(drivetime_map)
 
 if style_update_button:
-    build_map()   
+    drivetime_map, area_stats, price_data, national_prices = payload()
+    build_metrics(area_stats, price_data, national_prices)
+    build_map(drivetime_map) 
