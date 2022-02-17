@@ -15,10 +15,12 @@ logo = 'static/fiera-logo-full.jpg'
 # Page config
 st.set_page_config(page_title='FRE UK Drivetime Analysis', 
                    page_icon=favicon, 
-                   initial_sidebar_state='auto',
-                   menu_items={'Get help':'https://www.fierarealestate.co.uk/contact-us/',
-                               'Report a bug':None,
-                               'About':'Contact David Bender at Fiera Real Estate for support or more details.'})
+                   initial_sidebar_state='auto')
+                   
+                   #,
+                   #menu_items={'Get help':'https://www.fierarealestate.co.uk/contact-us/',
+                   #            'Report a bug':None,
+                   #            'About':'Contact David Bender at Fiera Real Estate for support or more details.'})
 
 # Header Image and title
 st.image(logo, width=250)
