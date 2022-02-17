@@ -9,6 +9,7 @@ load_dotenv()
 
 # Static
 app_password = os.environ.get('APP_PASSWORD')
+db = Supabase()
 favicon = 'static/fiera-favicon.jpeg'
 logo = 'static/fiera-logo-full.jpg'
 ## Streamlit App
@@ -30,7 +31,6 @@ password_input = st.sidebar.text_input('Password')
 address_input = st.sidebar.text_input('Input address here',value='Emirates Stadium, N7 7AJ')
 travel_mode = st.sidebar.selectbox('Travel mode',options=['driving','walking','cycling'])
 travel_time = st.sidebar.slider('Travel time (m)', min_value=5, max_value=60, value=20, step=1)
-travel_time_seconds = travel_time * 60
 
 search_button = st.sidebar.button('Search')
 
@@ -97,16 +97,34 @@ def execute_visuals(spinner_text: str = 'Building your analysis'):
         build_map(drivetime_map)
 
 if search_button:
-    db = Supabase()
     if (db.check_user(email=email_input)) and (password_input == app_password):
+        try:
+            db.add_row(table_name='searches',
+                   user=email_input,
+                   address=address_input,
+                   mode=travel_mode,
+                   range=travel_time,
+                   map_style=map_styling,
+                   map_colours=map_colours)
+        except:
+            pass
         execute_visuals()
     else:
         st.error('''**Sorry, you do not have permission to use the app.** 
                     Please check the email and password, or contact Fiera Real Estate UK for access.''')
 
 if style_update_button:
-    db = Supabase()
     if (db.check_user(email=email_input)) and (password_input == app_password):
+        try:
+            db.add_row(table_name='searches',
+                   user=email_input,
+                   address=address_input,
+                   mode=travel_mode,
+                   range=travel_time,
+                   map_style=map_styling,
+                   map_colours=map_colours)
+        except:
+            pass
         execute_visuals(spinner_text='Styling your visuals')
     else:
         st.error('''**Sorry, you do not have permission to use the app.**

@@ -29,3 +29,11 @@ class Supabase():
         if email in user_list:
             return True
         return False
+
+    def add_row(self, table_name: str, **kwargs):
+        url = f'{self.url}/{table_name}'
+        headers = self.headers
+        headers['Content-Type'] = 'application/json'
+        headers['Prefer'] = 'return=representation'
+        request = requests.post(url=url, headers=headers, json=kwargs)
+        return request
