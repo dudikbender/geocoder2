@@ -24,10 +24,12 @@ class Supabase():
         return self.get_table('searches', **kwargs)
 
     def check_user(self, email: str):
-        users = self.get_users(select='email')
+        users = self.get_users()
         user_list = pd.DataFrame(users)['email'].tolist()
         if email in user_list:
-            return True
+            for i in users:
+                if i['email'] == email:
+                    return i
         return False
 
     def add_row(self, table_name: str, **kwargs):

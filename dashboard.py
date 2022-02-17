@@ -30,7 +30,7 @@ email_input = st.sidebar.text_input('Email')
 password_input = st.sidebar.text_input('Password')
 address_input = st.sidebar.text_input('Input address here',value='Emirates Stadium, N7 7AJ')
 travel_mode = st.sidebar.selectbox('Travel mode',options=['driving','walking','cycling'])
-travel_time = st.sidebar.slider('Travel time (m)', min_value=5, max_value=60, value=20, step=1)
+travel_time = st.sidebar.slider('Travel time (m)', min_value=5, max_value=60, value=20, step=5)
 
 search_button = st.sidebar.button('Search')
 
@@ -44,6 +44,15 @@ with st.expander('Style Options'):
     map_zoom = st.selectbox('Map zoom', options=[5,6,7,8,8,9,10,11,12,13,14,15],index=6)
     area_specificity = st.slider('Specificity of drive-time area',min_value=0, max_value=200, step=10, value=20)
     style_update_button = st.button('Update styles')
+
+def confirm_user():
+    user = db.check_user(email=email_input)
+    if not user:
+        return False
+    elif user['password'] != password_input:
+        return False
+    else:
+        return True
 
 def payload():
     mapper = Mapper(address=address_input)
@@ -97,7 +106,7 @@ def execute_visuals(spinner_text: str = 'Building your analysis'):
         build_map(drivetime_map)
 
 if search_button:
-    if (db.check_user(email=email_input)) and (password_input == app_password):
+    if confirm_user():
         try:
             db.add_row(table_name='searches',
                    user=email_input,
@@ -114,7 +123,7 @@ if search_button:
                     Please check the email and password, or contact Fiera Real Estate UK for access.''')
 
 if style_update_button:
-    if (db.check_user(email=email_input)) and (password_input == app_password):
+    if confirm_user():
         try:
             db.add_row(table_name='searches',
                    user=email_input,
