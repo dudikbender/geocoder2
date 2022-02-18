@@ -14,7 +14,7 @@ favicon = 'static/fiera-favicon.jpeg'
 logo = 'static/fiera-logo-full.jpg'
 ## Streamlit App
 # Page config
-st.set_page_config(page_title='FRE UK Drivetime Analysis', 
+st.set_page_config(page_title='FRE UK Travel Time Analysis', 
                    page_icon=favicon, 
                    initial_sidebar_state='auto',
                    menu_items={'Get help':'https://www.fierarealestate.co.uk/contact-us/',
@@ -23,7 +23,7 @@ st.set_page_config(page_title='FRE UK Drivetime Analysis',
 
 # Header Image and title
 st.image(logo, width=250)
-st.header("**England and Wales Drivetime Analysis**")
+st.header("**England and Wales Travel Time Analysis**")
 
 # Set up sidebar
 email_input = st.sidebar.text_input('Email')
@@ -41,8 +41,9 @@ with st.expander('Style Options'):
     map_colour_options = ['oranges','blues', 'purples', 'teal', 'bluered', 'viridis', 'sunset', 'dense']
     map_styling = st.selectbox('Map style',options=map_style_options,index=0)
     map_colours = st.selectbox('Data colors',options=map_colour_options, index=0)
-    map_zoom = st.selectbox('Map zoom', options=[5,6,7,8,8,9,10,11,12,13,14,15],index=6)
-    area_specificity = st.slider('Specificity of drive-time area',min_value=0, max_value=200, step=10, value=20)
+    map_opacity = st.selectbox('Area opacity', options=[0.25, 0.5, 0.75, 1], index=1)
+    map_zoom = st.selectbox('Map zoom', options=[8,9,10,11,12,13,14,15],index=2)
+    area_specificity = st.slider('Specificity of drive-time area',min_value=10, max_value=200, step=10, value=20)
     style_update_button = st.button('Update styles')
 
 def confirm_user():
@@ -60,7 +61,7 @@ def payload():
                                                              minutes=travel_time,
                                                              generalize=area_specificity, 
                                                              zoom_level=map_zoom,
-                                                             opacity=0.5,
+                                                             opacity=map_opacity,
                                                              map_style=map_styling,
                                                              color_scheme=map_colours)
 
@@ -84,10 +85,10 @@ def build_metrics(area_stats, price_data, national_prices):
 
     st.markdown(f'##### Within **{travel_time}** mins **{travel_mode}** of **{address_input}**:\n')
 
-    st.markdown('###### Population details')
+    st.markdown('###### Population details within area')
     pop_col1, pop_col2, pop_col3 = st.columns(3)
     pop_col1.metric('Approx. Population',f'{area_stats.total_population.sum():,.0f}', None)
-    pop_col2.metric('Median Age of drivetime area', f'{area_median_age:,.0f}')
+    pop_col2.metric('Median Age', f'{area_median_age:,.0f}')
     pop_col3.metric('UK National median age', '40.5', None)
 
     st.markdown('###### House Prices paid (2019)\n(compared to national average)')

@@ -15,7 +15,7 @@ class Geocoder():
         self.crs = 4326
 
     def geocode_address(self, lat_lon: bool = True):
-        url = f'https://api.mapbox.com/geocoding/v5/mapbox.places/{self.address}.json?access_token={self.token}' #&country={self.country_code}'
+        url = f'https://api.mapbox.com/geocoding/v5/mapbox.places/{self.address}.json?access_token={self.token}&country={self.country_code}'
         headers ={'Accept':'application/json'}
         response = requests.get(url, headers=headers)
         if not lat_lon:
@@ -32,7 +32,7 @@ class Geocoder():
                   generalize: int = 50):
         lon_lat = self.geocode_address(lat_lon=True)
         lon, lat = lon_lat
-        url = f'https://api.mapbox.com/isochrone/v1/mapbox/{mode}/{lon},{lat}' #?polygons=true&contours_minutes={int(minutes)}&denoise={float(denoise)}&generalize={generalize}&access_token={self.token}'
+        url = f'https://api.mapbox.com/isochrone/v1/mapbox/{mode}/{lon},{lat}'
         headers = {'Accept':"application/json"}
         params = {'polygons':'true',
                   'contours_minutes':minutes,
