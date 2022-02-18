@@ -1,8 +1,11 @@
 import streamlit as st
+import pandas as pd
 from models import Mapper, Supabase
+from models.state_management import set_state, write_state, clear_state
 import plotly.express as px
 import json
 import geojson
+from datetime import datetime
 import os
 from dotenv import find_dotenv, load_dotenv
 load_dotenv()
@@ -11,7 +14,7 @@ load_dotenv()
 app_password = os.environ.get('APP_PASSWORD')
 db = Supabase()
 favicon = 'static/fiera-favicon.jpeg'
-logo = 'static/fiera-logo-full.jpg'
+logo = 'static/fiera-logo-2.png'
 ## Streamlit App
 # Page config
 st.set_page_config(page_title='FRE UK Travel Time Analysis', 
@@ -20,20 +23,22 @@ st.set_page_config(page_title='FRE UK Travel Time Analysis',
                    menu_items={'Get help':'https://www.fierarealestate.co.uk/contact-us/',
                                'Report a bug':None,
                                'About':'Contact David Bender at Fiera Real Estate for support or more details.'})
+#write_state()
+#clear_state()
 
 # Header Image and title
-st.image(logo, width=250)
+st.image(logo, width=200)
 st.header("**England and Wales Travel Time Analysis**")
 
 # Set up sidebar
 email_input = st.sidebar.text_input('Email')
-password_input = st.sidebar.text_input('Password')
+password_input = st.sidebar.text_input('Password', type='password')
 address_input = st.sidebar.text_input('Input address here',value='Emirates Stadium, N7 7AJ')
 travel_mode = st.sidebar.selectbox('Travel mode',options=['driving','walking','cycling'])
 travel_time = st.sidebar.slider('Travel time (m)', min_value=5, max_value=60, value=20, step=5)
-
 search_button = st.sidebar.button('Search')
 
+# Styling Options
 with st.expander('Style Options'):
     map_style_options = ['carto-positron', 'carto-darkmatter', 'open-street-map', 'white-bg', 'stamen-terrain', 
                      'stamen-toner', 'stamen-watercolor','basic', 'streets', 'outdoors', 'light', 'dark', 
@@ -100,14 +105,27 @@ def build_metrics(area_stats, price_data, national_prices):
 def build_map(drivetime_map):
     st.plotly_chart(drivetime_map)
 
+def data_download(area_stats: pd.DataFrame):
+    df = area_stats[['Ward Name', 'total_population', 'mean_age','median_age']]
+    df.columns = ['Ward','Population','Mean Age','Median Age']
+    df = df.sort_values('Population')
+    csv = df.to_csv().encode('utf-8')
+    st.download_button(label="Download ward data as CSV",
+                        data=csv,
+                        file_name=f'drive_time_analysis - {address_input}.csv',
+                        mime='text/csv')
+    st.dataframe(df)
+
 def execute_visuals(spinner_text: str = 'Building your analysis'):
     with st.spinner(f'**{spinner_text}...**'):
         drivetime_map, area_stats, price_data, national_prices = payload()
         build_metrics(area_stats, price_data, national_prices)
         build_map(drivetime_map)
+        return area_stats
 
 if search_button:
     if confirm_user():
+        set_state(email_input, password_input)
         try:
             db.add_row(table_name='searches',
                    user=email_input,
@@ -118,13 +136,15 @@ if search_button:
                    map_colours=map_colours)
         except:
             pass
-        execute_visuals()
+        area_stats = execute_visuals()
+        data_download(area_stats)
     else:
         st.error('''**Sorry, you do not have permission to use the app.** 
                     Please check the email and password, or contact Fiera Real Estate UK for access.''')
 
 if style_update_button:
     if confirm_user():
+        set_state(email_input, password_input)
         try:
             db.add_row(table_name='searches',
                    user=email_input,
@@ -135,7 +155,9 @@ if style_update_button:
                    map_colours=map_colours)
         except:
             pass
-        execute_visuals(spinner_text='Styling your visuals')
+        st.balloons()
+        area_stats = execute_visuals(spinner_text='Styling your visuals')
+        data_download(area_stats)
     else:
         st.error('''**Sorry, you do not have permission to use the app.**
                 Please check the email and password, or contact Fiera Real Estate UK for access.''')
