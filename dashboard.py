@@ -90,7 +90,7 @@ def build_metrics(area_stats, price_data, national_prices):
     pop_col2.metric('Median Age of drivetime area', f'{area_median_age:,.0f}')
     pop_col3.metric('UK National median age', '40.5', None)
 
-    st.markdown('###### House Prices paid (2019) data within drivetime area \n(compared to national average)')
+    st.markdown('###### House Prices paid (2019)\n(compared to national average)')
     col1, col2, col3 = st.columns(3)
     col1.metric("Median Price", f'£{median_price:,.0f}', f'{median_price_to_national:+.2f}%')
     col2.metric("Average Price", f'£{mean_price:,.0f}', f'{mean_price_to_national:+.2f}%')
