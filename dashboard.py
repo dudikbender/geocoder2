@@ -41,8 +41,8 @@ with st.expander('Style Options'):
     map_colour_options = ['oranges','blues', 'purples', 'teal', 'bluered', 'viridis', 'sunset', 'dense']
     map_styling = st.selectbox('Map style',options=map_style_options,index=0)
     map_colours = st.selectbox('Data colors',options=map_colour_options, index=0)
-    map_opacity = st.selectbox('Area opacity', options=[0.25, 0.5, 0.75, 1], index=1)
-    map_zoom = st.slider('Map zoom', min_value=0.2, max_value=1.0, step=0.1, value=0.5)
+    map_zoom = st.selectbox('Starting map zoom', options=[8, 9, 10, 11, 12, 13, 14], index=2)
+    map_opacity = st.slider('Area opacity', min_value=0.2, max_value=1.0, step=0.1, value=0.5)
     area_specificity = st.slider('Specificity of drive-time area',min_value=10, max_value=200, step=10, value=20)
     style_update_button = st.button('Update styles')
 
