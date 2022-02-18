@@ -4,12 +4,6 @@ import streamlit as st
 state_expiry = 30
 
 def set_state(email_input, password_input):
-    if 'session_start' not in st.session_state:
-        st.session_state['session_start'] = datetime.now()
-    if 'username' not in st.session_state:
-        st.session_state['username'] = email_input
-    if 'password' not in st.session_state:
-        st.session_state['password'] = password_input
     st.session_state['username'] = email_input
     st.session_state['password'] = password_input
     st.session_state['session_start'] = datetime.now()
