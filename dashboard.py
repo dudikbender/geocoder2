@@ -23,6 +23,7 @@ st.set_page_config(page_title='FRE UK Travel Time Analysis',
                    menu_items={'Get help':'https://www.fierarealestate.co.uk/contact-us/',
                                'Report a bug':None,
                                'About':'Contact David Bender at Fiera Real Estate for support or more details.'})
+pd.options.display.float_format = '{:,}'.format
 #write_state()
 #clear_state()
 
@@ -108,7 +109,13 @@ def build_map(drivetime_map):
 def data_download(area_stats: pd.DataFrame):
     df = area_stats[['Ward Name', 'total_population', 'mean_age','median_age']]
     df.columns = ['Ward','Population','Mean Age','Median Age']
-    df = df.sort_values('Population')
+    df = df.sort_values('Population', ascending=False).reset_index(drop=True)
+    formatted_pop = []
+    for x in df['Population']:
+        formatted = f'{int(x):,.0f}'
+        formatted_pop.append(formatted)
+    df['Population'] = formatted_pop
+    df['Median Age'] = df['Median Age'].astype(int)
     csv = df.to_csv().encode('utf-8')
     st.download_button(label="Download ward data as CSV",
                         data=csv,
@@ -136,6 +143,7 @@ if search_button:
                    map_colours=map_colours)
         except:
             pass
+        st.balloons()
         area_stats = execute_visuals()
         data_download(area_stats)
     else:
