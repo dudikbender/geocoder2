@@ -13,7 +13,7 @@ cachetools==4.2.1
 certifi==2020.12.5
 cffi==1.14.5
 chardet==4.0.0
-click==8.0.3
+click
 click-plugins==1.1.1
 cligj==0.7.1
 cycler==0.10.0
