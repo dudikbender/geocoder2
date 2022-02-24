@@ -18,9 +18,9 @@ class Mapper(Geocoder):
     def __init__(self, 
                  address: str):
         super().__init__(address=address)
-        prices = pd.read_csv('data/prices_paid_2019.csv')
+        """ prices = pd.read_csv('data/prices_paid_2019.csv')
         self.prices_gdf = gpd.GeoDataFrame(prices, geometry=gpd.points_from_xy(prices.longitude, prices.latitude, crs=4326))
-
+ """
     @staticmethod
     def wards_pop():
         ward_pop = pd.read_csv('data/wards/ward_population_projections_full_2019.csv').iloc[:,1:]
@@ -66,8 +66,8 @@ class Mapper(Geocoder):
                   color_scheme: str = 'oranges'):
         drivetime_area, address_coords = self.overlay(mode, minutes, denoise, generalize)
         lat, lon = address_coords[1], address_coords[0]
-        drivetime_with_prices = gpd.sjoin(drivetime_area, self.prices_gdf)
-        drivetime_with_prices = pd.DataFrame(drivetime_with_prices.drop(columns='geometry', axis=1))
+        #drivetime_with_prices = gpd.sjoin(drivetime_area, self.prices_gdf)
+        #drivetime_with_prices = pd.DataFrame(drivetime_with_prices.drop(columns='geometry', axis=1))
 
         drivetime_data = pd.DataFrame(drivetime_area.drop(columns='geometry', axis=1))
         drivetime_geojson = json.loads(drivetime_area.to_json())
@@ -88,4 +88,4 @@ class Mapper(Geocoder):
                                          lon=[lon])
                 
         fig.add_trace(centre_point.data[0]).update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-        return fig, drivetime_data, drivetime_with_prices
+        return fig, drivetime_data, drivetime_area #, drivetime_with_prices

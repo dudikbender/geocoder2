@@ -1,4 +1,6 @@
 import pandas as pd
+import json
+import geopandas as gpd
 import requests
 import os
 from dotenv import load_dotenv, find_dotenv
@@ -39,3 +41,29 @@ class Supabase():
         headers['Prefer'] = 'return=representation'
         request = requests.post(url=url, headers=headers, json=kwargs)
         return request
+
+def import_hex_geojson():
+    with open('data/prices-paid-hex.geojson') as json_file:
+        data = json.load(json_file)
+    
+    d = pd.DataFrame(data['features'])
+
+    mean = []
+    median = []
+    total = []
+    count = []
+
+    for x in d['properties']:
+        mean.append(x[0]['mean_price'])
+        median.append(x[1]['median_price'])
+        total.append(x[2]['total_paid'])
+        count.append(x[3]['count'])
+        
+    d['mean_price'] = mean
+    d['median_price'] = median
+    d['total_paid'] = total
+    d['count'] = count
+
+    df = d.drop(columns=['properties','type'])
+
+    return df #gpd.GeoDataFrame(df, geometry='geometry').set_crs(4326)

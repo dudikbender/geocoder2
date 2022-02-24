@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-from models import Mapper, Supabase
+import geopandas as gpd
+from models import Mapper, Supabase, PricesPaid
 from models.state_management import set_state, write_state, clear_state
 import plotly.express as px
 import json
@@ -15,6 +16,7 @@ app_password = os.environ.get('APP_PASSWORD')
 db = Supabase()
 favicon = 'static/fiera-favicon.jpeg'
 logo = 'static/fiera-logo-2.png'
+
 ## Streamlit App
 # Page config
 st.set_page_config(page_title='FRE UK Travel Time Analysis', 
@@ -24,19 +26,31 @@ st.set_page_config(page_title='FRE UK Travel Time Analysis',
                                'Report a bug':None,
                                'About':'Contact David Bender at Fiera Real Estate for support or more details.'})
 pd.options.display.float_format = '{:,}'.format
-#write_state()
-#clear_state()
 
 # Header Image and title
 st.image(logo, width=200)
 st.header("**England and Wales Travel Time Analysis**")
+
+# Instantiate the Prices Paid data as H3 GeoDataFrame
+@st.cache
+def import_prices_df():
+    prices_df = pd.read_csv('data/prices-paid-hex.csv')
+    return prices_df
+
+@st.cache
+def import_hex():
+    prices_geo = PricesPaid().to_h3()
+    return prices_geo
+
+prices_df = import_prices_df()
+prices_geo = import_hex()
 
 # Set up sidebar
 email_input = st.sidebar.text_input('Email')
 password_input = st.sidebar.text_input('Password', type='password')
 address_input = st.sidebar.text_input('Input address here',value='Emirates Stadium, N7 7AJ')
 travel_mode = st.sidebar.selectbox('Travel mode',options=['driving','walking','cycling'])
-travel_time = st.sidebar.slider('Travel time (m)', min_value=5, max_value=60, value=20, step=5)
+travel_time = st.sidebar.slider('Travel time (m)', min_value=10, max_value=60, value=20, step=5)
 search_button = st.sidebar.button('Search')
 
 # Styling Options
@@ -63,7 +77,7 @@ def confirm_user():
 
 def payload():
     mapper = Mapper(address=address_input)
-    drivetime_map, area_stats, price_data = mapper.build_map(mode=travel_mode,
+    drivetime_map, area_stats, drivetime_area = mapper.build_map(mode=travel_mode,
                                                              minutes=travel_time,
                                                              generalize=area_specificity, 
                                                              zoom_level=map_zoom,
@@ -71,20 +85,24 @@ def payload():
                                                              map_style=map_styling,
                                                              color_scheme=map_colours)
 
-    return drivetime_map, area_stats, price_data, mapper.prices_gdf
+    return drivetime_map, area_stats, drivetime_area
+
+def overlay_drivetime_with_prices(drivetime_area):
+    overlay = gpd.overlay(drivetime_area, prices_geo)
+    return overlay
 
 def build_metrics(area_stats, price_data, national_prices):
     def diff_to_national(area, national):
         diff = area - national
         return ( diff / national ) * 100
 
-    median_price = price_data.AMOUNT.median()
-    median_price_to_national = diff_to_national(median_price, national_prices.AMOUNT.median())
+    median_price = price_data['median_price'].mean()
+    median_price_to_national = diff_to_national(median_price, national_prices['median_price'].mean())
 
-    mean_price = price_data.AMOUNT.mean()
-    mean_price_to_national = diff_to_national(mean_price, national_prices.AMOUNT.mean())
+    mean_price = price_data['mean_price'].mean()
+    mean_price_to_national = diff_to_national(mean_price, national_prices['mean_price'].mean())
 
-    total_paid_millions = price_data.AMOUNT.sum() / 1000000
+    total_paid_millions = price_data['total_paid'].sum() / 1000000
 
     area_median_age = area_stats.median_age.median()
     diff_area_age_to_uk = (area_median_age / 40.5)
@@ -98,10 +116,10 @@ def build_metrics(area_stats, price_data, national_prices):
     pop_col3.metric('UK National median age', '40.5', None)
 
     st.markdown('###### House Prices paid (2019)\n(compared to national average)')
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     col1.metric("Median Price", f'£{median_price:,.0f}', f'{median_price_to_national:+.2f}%')
     col2.metric("Average Price", f'£{mean_price:,.0f}', f'{mean_price_to_national:+.2f}%')
-    col3.metric("Total Volume (£)", f'£{total_paid_millions:,.0f}M', None)
+    #col3.metric("Total Volume (£)", f'£{total_paid_millions:,.0f}M', None)
 
 def build_map(drivetime_map):
     st.plotly_chart(drivetime_map)
@@ -125,9 +143,14 @@ def data_download(area_stats: pd.DataFrame):
 
 def execute_visuals(spinner_text: str = 'Building your analysis'):
     with st.spinner(f'**{spinner_text}...**'):
-        drivetime_map, area_stats, price_data, national_prices = payload()
-        build_metrics(area_stats, price_data, national_prices)
+        start_time = datetime.now()
+        drivetime_map, area_stats, drivetime_area = payload()
+        price_data = overlay_drivetime_with_prices(drivetime_area)
+
+        build_metrics(area_stats, price_data, prices_df)
         build_map(drivetime_map)
+        total_run_time = datetime.now() - start_time
+        st.write(f'Results in: {total_run_time.total_seconds():.3f}s')
         return area_stats
 
 if search_button:
