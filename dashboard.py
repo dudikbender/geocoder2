@@ -44,6 +44,8 @@ def import_hex():
 
 prices_df = import_prices_df()
 prices_geo = import_hex()
+all_wards_pop = Mapper.wards_pop().rename(columns={'wd20cd':'Ward Code','wd20nm':'Ward Name'})
+avg_ward_pop = all_wards_pop.total_population.mean()
 
 # Set up sidebar
 email_input = st.sidebar.text_input('Email')
@@ -115,10 +117,10 @@ def build_metrics(area_stats, price_data, national_prices):
     pop_col2.metric('Median Age', f'{area_median_age:,.0f}')
     pop_col3.metric('UK National median age', '40.5', None)
 
-    st.markdown('###### House Prices paid (2019)\n(compared to national average)')
+    st.markdown('###### House Prices paid (2019)')
     col1, col2 = st.columns(2)
-    col1.metric("Median Price", f'£{median_price:,.0f}', f'{median_price_to_national:+.2f}%')
-    col2.metric("Average Price", f'£{mean_price:,.0f}', f'{mean_price_to_national:+.2f}%')
+    col1.metric("Median Price (relative to national)", f'£{median_price:,.0f}', f'{median_price_to_national:.2f}%')
+    col2.metric("Average Price (relative to national)", f'£{mean_price:,.0f}', f'{mean_price_to_national:.2f}%')
     #col3.metric("Total Volume (£)", f'£{total_paid_millions:,.0f}M', None)
 
 def build_map(drivetime_map):
@@ -126,14 +128,17 @@ def build_map(drivetime_map):
 
 def data_download(area_stats: pd.DataFrame):
     df = area_stats[['Ward Name', 'total_population', 'mean_age','median_age']]
-    df.columns = ['Ward','Population','Mean Age','Median Age']
+    df.columns = ['Ward','Population','Average Age','Median Age']
     df = df.sort_values('Population', ascending=False).reset_index(drop=True)
+    df['Pop. to Average Ward'] = df['Population'].apply(lambda x: ((x - avg_ward_pop) / x) * 100).apply(lambda x: f'{x:+.1f}%')
     formatted_pop = []
     for x in df['Population']:
         formatted = f'{int(x):,.0f}'
         formatted_pop.append(formatted)
     df['Population'] = formatted_pop
     df['Median Age'] = df['Median Age'].astype(int)
+    df['Ward Average'] = avg_ward_pop
+    df = df[['Ward','Population','Average Age','Median Age','Pop. to Average Ward']]
     csv = df.to_csv().encode('utf-8')
     st.download_button(label="Download ward data as CSV",
                         data=csv,
@@ -150,7 +155,7 @@ def execute_visuals(spinner_text: str = 'Building your analysis'):
         build_metrics(area_stats, price_data, prices_df)
         build_map(drivetime_map)
         total_run_time = datetime.now() - start_time
-        st.write(f'Results in: {total_run_time.total_seconds():.3f}s')
+        st.write(f'Results in: **{total_run_time.total_seconds():.3f}s**')
         return area_stats
 
 if search_button:
