@@ -50,7 +50,7 @@ avg_ward_pop = all_wards_pop.total_population.mean()
 # Set up sidebar
 email_input = st.sidebar.text_input('Email')
 password_input = st.sidebar.text_input('Password', type='password')
-address_input = st.sidebar.text_input('Input address here',value='Emirates Stadium, N7 7AJ')
+address_input = st.sidebar.text_input('Input address here',value='3 Old Burlington Street, London, W1S 3AE')
 travel_mode = st.sidebar.selectbox('Travel mode',options=['driving','walking','cycling'])
 travel_time = st.sidebar.slider('Travel time (m)', min_value=10, max_value=60, value=20, step=5)
 search_button = st.sidebar.button('Search')
