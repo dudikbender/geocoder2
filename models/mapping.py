@@ -27,9 +27,16 @@ class Mapper(Geocoder):
         return ward_pop.drop(columns=['wd20nm'])
 
     def wards_shp(self):
-        data = requests.get('https://opendata.arcgis.com/datasets/62bfaabbe3e24a359fc36b34d7fe8ac8_0.geojson')
+        # 2020 BFC wards
+        ## data = requests.get('https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Wards_December_2020_UK_BFC_2022/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson')
+        # 2020 BFE wards
+        data = requests.get('https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Wards_December_2020_UK_BFE_V2_2022/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson')
+        # 2020 BSC wards
+        ##data = requests.get('https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Wards_Dec_2020_UK_BSC_V2_2022/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson')
+        
         collection = FeatureCollection(data.json())
         ward_shp = gpd.GeoDataFrame.from_features(collection['features']).set_crs(epsg=self.crs)
+        ward_shp.rename(columns={'WD20CD':'wd20cd', 'WD20NM':'wd20nm'}, inplace=True)
         return ward_shp.iloc[:, :4]
 
     def wards(self):
